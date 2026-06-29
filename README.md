@@ -6,8 +6,9 @@
 
 本项目适用于以下场景：
 
-- 为 Seurat V5 单细胞课程代码准备 R 4.4.x 运行环境。
-- 自动补充 `Rscript`、Rtools44、Git gzip、Conda、JAGS 等工具的 PATH。
+- 为 Seurat V5 单细胞课程代码准备 R 4.3 或更新版本运行环境。
+- 为 Python 模块准备 Python 3.10 或更新版本环境。
+- 自动补充 `Rscript`、匹配的 Rtools、Git gzip、Conda、JAGS 等工具的 PATH。
 - 按课程脚本需求安装 CRAN、Bioconductor、GitHub 和课程本地 `tar.gz` R 包。
 - 创建供 `reticulate`、API 调用或 scverse 辅助流程使用的 Conda Python 环境。
 - 在正式跑分析前生成环境检查报告，确认缺失的软件和包。
@@ -39,7 +40,6 @@ seuratv5-env-requirements/
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check_environment.ps1 `
-  -Rscript "E:\R-4.4.2\bin\Rscript.exe" `
   -CondaEnv "seuratv5-course-py"
 ```
 
@@ -51,14 +51,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check_environment.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_environment.ps1 `
-  -RHome "E:\R-4.4.2"
+  -CondaEnv "seuratv5-course-py"
 ```
 
 安装 R 包和 Python 环境：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_environment.ps1 `
-  -RHome "E:\R-4.4.2" `
   -InstallRPackages `
   -InstallPythonEnv
 ```
@@ -68,9 +67,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_environmen
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_environment.ps1 `
   -CourseRoot "F:\0000-单细胞转录组\05_SeuratV5全流程视频及配套代码\SeuratV5全流程配套代码\单细胞V5" `
-  -RHome "E:\R-4.4.2" `
   -InstallRPackages `
   -InstallPythonEnv
+```
+
+如果机器上有多个 R 版本，可以用 `-RHome` 指向任意 R 4.3 或更新版本，例如：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_environment.ps1 `
+  -RHome "E:\R-4.4.2" `
+  -InstallRPackages
 ```
 
 ## 主要脚本

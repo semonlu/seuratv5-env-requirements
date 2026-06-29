@@ -1,6 +1,6 @@
 param(
   [string]$CourseRoot = "",
-  [string]$RHome = "E:\R-4.4.2",
+  [string]$RHome = "",
   [string]$CondaEnv = "seuratv5-course-py",
   [switch]$InstallRPackages,
   [switch]$InstallPythonEnv,
@@ -71,6 +71,52 @@ function Add-UserPathEntry {
   }
 }
 
+function Resolve-RscriptPath {
+  param([string]$InputRHome)
+
+  if ($InputRHome) {
+    $candidate = Join-Path $InputRHome "bin\Rscript.exe"
+    if (Test-Path -LiteralPath $candidate) {
+      return (Resolve-Path -LiteralPath $candidate).Path
+    }
+  }
+
+  $cmd = Get-Command Rscript -ErrorAction SilentlyContinue
+  if ($cmd) {
+    return $cmd.Source
+  }
+
+  $candidates = @()
+  foreach ($root in @("E:\", "C:\Program Files\R")) {
+    if (Test-Path -LiteralPath $root) {
+      $candidates += Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match "^R-[0-9]+\.[0-9]+" } |
+        Sort-Object Name -Descending |
+        ForEach-Object { Join-Path $_.FullName "bin\Rscript.exe" }
+    }
+  }
+
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate) {
+      return (Resolve-Path -LiteralPath $candidate).Path
+    }
+  }
+
+  return ""
+}
+
+function Test-RVersion {
+  param([string]$RscriptPath)
+  if (-not $RscriptPath -or -not (Test-Path -LiteralPath $RscriptPath)) {
+    return
+  }
+  $versionText = & $RscriptPath -e "cat(as.character(getRversion()))"
+  if ([version]$versionText -lt [version]"4.3.0") {
+    throw "R >= 4.3 is required, but detected R $versionText at $RscriptPath"
+  }
+  Write-Host "Detected R $versionText at $RscriptPath"
+}
+
 function Invoke-Script {
   param([string]$File, [string[]]$Arguments)
   $display = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$File`" $($Arguments -join ' ')"
@@ -88,10 +134,19 @@ if ($CourseRoot) {
   Write-Warning "Course root was not found. Pass -CourseRoot explicitly when installing local course archives."
 }
 
-Write-Step "Adding runtime directories to PATH"
-Add-UserPathEntry -PathEntry (Join-Path $RHome "bin")
+$resolvedRscript = Resolve-RscriptPath -InputRHome $RHome
+Test-RVersion -RscriptPath $resolvedRscript
 
-foreach ($root in @("E:\rtools44", "C:\rtools44")) {
+Write-Step "Adding runtime directories to PATH"
+if ($RHome) {
+  Add-UserPathEntry -PathEntry (Join-Path $RHome "bin")
+} elseif ($resolvedRscript) {
+  Add-UserPathEntry -PathEntry (Split-Path -Parent $resolvedRscript)
+} else {
+  Write-Warning "Rscript was not found. Install R >= 4.3 or pass -RHome."
+}
+
+foreach ($root in @("E:\rtools44", "C:\rtools44", "E:\rtools43", "C:\rtools43")) {
   Add-UserPathEntry -PathEntry (Join-Path $root "usr\bin")
   Add-UserPathEntry -PathEntry (Join-Path $root "x86_64-w64-mingw32.static.posix\bin")
 }
@@ -117,16 +172,11 @@ if ($InstallPythonEnv) {
 
 if ($InstallRPackages) {
   Write-Step "Installing R packages"
-  $rscript = Join-Path $RHome "bin\Rscript.exe"
+  $rscript = Resolve-RscriptPath -InputRHome $RHome
   if (-not (Test-Path -LiteralPath $rscript)) {
-    $rscriptCmd = Get-Command Rscript -ErrorAction SilentlyContinue
-    if ($rscriptCmd) {
-      $rscript = $rscriptCmd.Source
-    }
+    throw "Rscript was not found. Install R >= 4.3, pass -RHome, or add Rscript to PATH."
   }
-  if (-not (Test-Path -LiteralPath $rscript)) {
-    throw "Rscript was not found. Check -RHome or add Rscript to PATH."
-  }
+  Test-RVersion -RscriptPath $rscript
   $rArgs = @((Join-Path $SkillRoot "scripts\install_r_packages.R"))
   if ($CourseRoot) {
     $rArgs += "--course-root"
@@ -140,7 +190,11 @@ if ($InstallRPackages) {
 }
 
 Write-Step "Checking environment"
-$checkArgs = @("-Rscript", (Join-Path $RHome "bin\Rscript.exe"), "-CondaEnv", $CondaEnv)
+$checkArgs = @("-CondaEnv", $CondaEnv)
+if ($resolvedRscript) {
+  $checkArgs += "-Rscript"
+  $checkArgs += $resolvedRscript
+}
 if ($CourseRoot) {
   $checkArgs += "-CourseRoot"
   $checkArgs += $CourseRoot

@@ -2,7 +2,7 @@
 
 ## External Software
 
-The course bundle includes installers in `1.软件安装/`:
+The course bundle includes installers in `1.软件安装/`. The skill requires R 4.3 or newer and Python 3.10 or newer:
 
 - `R-4.4.2-win.exe`
 - `rtools44-6335-6327.exe`
@@ -11,9 +11,9 @@ The course bundle includes installers in `1.软件安装/`:
 
 Recommended installed paths on this machine:
 
-- R: `E:\R-4.4.2`
-- Rscript: `E:\R-4.4.2\bin\Rscript.exe`
-- Rtools44: `E:\rtools44` or `C:\rtools44`
+- R: any R 4.3 or newer installation, for example `E:\R-4.4.2`
+- Rscript: the corresponding `bin\Rscript.exe`
+- Rtools: Rtools43 for R 4.3, Rtools44 for R 4.4, or the matching newer Rtools release
 - Conda: `C:\ProgramData\miniconda3`
 - Git gzip: `C:\Program Files\Git\usr\bin\gzip.exe`
 
@@ -101,7 +101,7 @@ hdWGCNA-0.3.00.tar.gz
 The course is mostly R, but reticulate/API/scverse-compatible modules benefit from a local Conda environment:
 
 ```text
-python=3.10
+python>=3.10
 pandas
 numpy
 scipy

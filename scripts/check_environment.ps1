@@ -1,6 +1,6 @@
 param(
   [string]$CourseRoot = "",
-  [string]$Rscript = "E:\R-4.4.2\bin\Rscript.exe",
+  [string]$Rscript = "",
   [string]$CondaEnv = "seuratv5-course-py"
 )
 
@@ -59,8 +59,9 @@ if ($CourseRoot -and (Test-Path -LiteralPath $CourseRoot)) {
   Add-ReportLine -File "course.tsv" -Line "item`tavailable`tpath"
   Add-ReportLine -File "course.tsv" -Line "course_root`tTrue`t$CourseRoot"
   foreach ($fileName in @(
-    "R-4.4.2-win.exe",
+    "R-*.exe",
     "rtools44-6335-6327.exe",
+    "rtools43*.exe",
     "JAGS-4.3.1.exe",
     "monocle_xxdchange.tar.gz",
     "openai.tar.gz",
@@ -77,12 +78,19 @@ if ($CourseRoot -and (Test-Path -LiteralPath $CourseRoot)) {
 }
 
 $rscriptPath = $Rscript
-if (-not (Test-Path -LiteralPath $rscriptPath)) {
+if (-not $rscriptPath -or -not (Test-Path -LiteralPath $rscriptPath)) {
   $cmd = Get-Command Rscript -ErrorAction SilentlyContinue
   if ($cmd) { $rscriptPath = $cmd.Source }
 }
 
-if (Test-Path -LiteralPath $rscriptPath) {
+if ($rscriptPath -and (Test-Path -LiteralPath $rscriptPath)) {
+  $rVersionText = & $rscriptPath -e "cat(as.character(getRversion()))"
+  Add-ReportLine -File "tools.tsv" -Line "R version`t$([version]$rVersionText -ge [version]'4.3.0')`t$rVersionText"
+  if ([version]$rVersionText -lt [version]"4.3.0") {
+    Write-Host "MISS R version: detected $rVersionText, requires >= 4.3"
+  } else {
+    Write-Host "OK   R version: $rVersionText (requires >= 4.3)"
+  }
   $rCheck = @'
 packages <- c(
   "AnnoProbe","ape","assertthat","BiocParallel","car","CCA","CellChat","celldex",

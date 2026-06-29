@@ -6,6 +6,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if ([version]$PythonVersion -lt [version]"3.10") {
+  throw "Python modules require Python >= 3.10. Requested: $PythonVersion"
+}
+
 $packages = @(
   "pandas",
   "numpy",
