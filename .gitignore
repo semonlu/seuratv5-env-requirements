@@ -1,0 +1,30 @@
+# Local reports and logs
+seuratv5_environment_check/
+*.log
+*.tsv
+
+# Runtime caches
+.Rhistory
+.RData
+.Rproj.user/
+__pycache__/
+.ipynb_checkpoints/
+
+# Local data and outputs
+data/
+output/
+outputs/
+results/
+*.rds
+*.h5ad
+*.h5
+*.loom
+*.mtx
+*.mtx.gz
+*.tsv.gz
+*.csv.gz
+
+# Credentials
+.env
+*.key
+*token*
